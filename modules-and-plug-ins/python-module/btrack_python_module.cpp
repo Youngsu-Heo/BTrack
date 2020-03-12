@@ -4,21 +4,29 @@
 #include "../../src/BTrack.h"
 #include <numpy/arrayobject.h>
 
+#define GOOGLE_ARRAYSIZE(a) \
+  ((sizeof(a) / sizeof(*(a))) / static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
+
 //=======================================================================
 static PyObject * btrack_trackBeats(PyObject *dummy, PyObject *args)
 {
-    PyObject *arg1=NULL;
-    PyObject *arr1=NULL;
+    PyObject *arg1=nullptr;
+    PyObject *arr1=nullptr;
+//    double* arr1=nullptr;
     
     if (!PyArg_ParseTuple(args, "O", &arg1))
     {
-        return NULL;
+        return nullptr;
     }
     
+//    arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_IN_ARRAY);
+//    arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_INOUT_ARRAY);
+//    arr1 = static_cast<double *>(PyArray_DATA(arg1));
+//    arr1 = (double*)PyArray_DATA(arg1);
     arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (arr1 == NULL)
+    if (arr1 == nullptr)
     {
-        return NULL;
+        return nullptr;
     }
     
     
@@ -27,10 +35,13 @@ static PyObject * btrack_trackBeats(PyObject *dummy, PyObject *args)
     
     // get data as array
     double* data = (double*) PyArray_DATA(arr1);
+//    double* data = arr1;
     
     // get array size
-    long signal_length = PyArray_Size((PyObject*)arr1);
-    
+    long signal_length = PyArray_Size(arr1);
+//    long signal_length = GOOGLE_ARRAYSIZE(arr1);
+//    printf("  signal length = %s\n", signal_length);
+//    fprintf(stderr, "  signal length = %d\n", signal_length);
     
     ////////// BEGIN PROCESS ///////////////////
     int hopSize = 512;
@@ -94,7 +105,7 @@ static PyObject * btrack_trackBeats(PyObject *dummy, PyObject *args)
     npy_intp m= beatnum;
     //double fArray[5] = {0,1,2,3,4};
     
-    PyObject* c=PyArray_SimpleNew(nd, &m, NPY_DOUBLE);
+    PyObject* c = PyArray_SimpleNew(nd, &m, NPY_DOUBLE);
     
     void *arr_data = PyArray_DATA((PyArrayObject*)c);
     
@@ -112,18 +123,21 @@ static PyObject * btrack_trackBeats(PyObject *dummy, PyObject *args)
 //=======================================================================
 static PyObject * btrack_calculateOnsetDF(PyObject *dummy, PyObject *args)
 {
-    PyObject *arg1=NULL;
+    PyObject *arg1=nullptr;
     PyObject *arr1=NULL;
+//    double* arr1=nullptr;
     
     if (!PyArg_ParseTuple(args, "O", &arg1)) 
     {
-        return NULL;
+        return nullptr;
     }
     
     arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_IN_ARRAY); 
-    if (arr1 == NULL) 
+//    arr1 = static_cast<double *>(PyArray_DATA(arg1)); 
+    
+    if (arr1 == nullptr) 
     {
-        return NULL;
+        return nullptr;
     }
 
 
@@ -132,9 +146,12 @@ static PyObject * btrack_calculateOnsetDF(PyObject *dummy, PyObject *args)
     
     // get data as array
     double* data = (double*) PyArray_DATA(arr1);
+//    double* data = arr1;
     
     // get array size
-    long signal_length = PyArray_Size((PyObject*)arr1);
+//    long signal_length = PyArray_Size((PyObject*)arr1);
+    long signal_length = PyArray_Size(arr1);
+//    long signal_length = GOOGLE_ARRAYSIZE(arr1);
     
     ////////// BEGIN PROCESS ///////////////////
     int hopSize = 512;
@@ -197,18 +214,21 @@ static PyObject * btrack_calculateOnsetDF(PyObject *dummy, PyObject *args)
 //=======================================================================
 static PyObject * btrack_trackBeatsFromOnsetDF(PyObject *dummy, PyObject *args)
 {
-    PyObject *arg1=NULL;
-    PyObject *arr1=NULL;
+    PyObject *arg1=nullptr;
+    PyObject *arr1=nullptr;
+//    double* arr1=nullptr;
     
     if (!PyArg_ParseTuple(args, "O", &arg1)) 
     {
-        return NULL;
+        return nullptr;
     }
     
     arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_IN_ARRAY); 
-    if (arr1 == NULL) 
+//    arr1 = static_cast<double*>(PyArray_DATA(arg1)); 
+//    arr1 = static_cast<double*>(PyArray_DATA(arg1)); 
+    if (arr1 == nullptr) 
     {
-        return NULL;
+        return nullptr;
     }
     
     
@@ -217,9 +237,12 @@ static PyObject * btrack_trackBeatsFromOnsetDF(PyObject *dummy, PyObject *args)
     
     // get data as array
     double* data = (double*) PyArray_DATA(arr1);
+//    double* data = arr1;
     
     // get array size
-    long numframes = PyArray_Size((PyObject*)arr1);
+//    long numframes = PyArray_Size((PyObject*)arr1);
+    long numframes = PyArray_Size(arr1);
+//    long numframes = GOOGLE_ARRAYSIZE(arr1);
 
     ////////// BEGIN PROCESS ///////////////////
     int hopSize = 512;
@@ -291,22 +314,68 @@ static PyMethodDef btrack_methods[] = {
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 
+static struct PyModuleDef cModPyDem =
+{
+    PyModuleDef_HEAD_INIT,
+    "btrack", /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    btrack_methods
+};
+
+PyMODINIT_FUNC PyInit_btrack(void)
+{
+    import_array();
+    return PyModule_Create(&cModPyDem);
+}
+
 //=======================================================================
 PyMODINIT_FUNC initbtrack(void)
 {
-    (void)Py_InitModule("btrack", btrack_methods);
+//    (void)Py_InitModule("btrack", btrack_methods);
+    PyModule_Create(&cModPyDem);
     import_array();
 }
 
 //=======================================================================
+// int main(int argc, wchar_t** argv)
+// {
+//     /* Pass argv[0] to the Python interpreter */
+//     Py_SetProgramName(argv[0]);
+    
+//     /* Initialize the Python interpreter.  Required. */
+//     Py_Initialize();
+    
+//     /* Add a static module */
+//     initbtrack();
+// }
+
+
 int main(int argc, char *argv[])
 {
+    wchar_t *program = Py_DecodeLocale(argv[0], NULL);
+    if (program == NULL) {
+        fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
+        exit(1);
+    }
+
+
+    /* Add a built-in module, before Py_Initialize */
+    PyImport_AppendInittab("btrack", PyInit_btrack);
+
     /* Pass argv[0] to the Python interpreter */
-    Py_SetProgramName(argv[0]);
-    
+    Py_SetProgramName(program);
+
     /* Initialize the Python interpreter.  Required. */
     Py_Initialize();
-    
-    /* Add a static module */
-    initbtrack();
+
+    /* Optionally import the module; alternatively,
+       import can be deferred until the embedded script
+       imports it. */
+    PyImport_ImportModule("btrack");
+
+
+
+    PyMem_RawFree(program);
+    return 0;
 }
